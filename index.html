@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insurance Lo — Neutral Orchestration Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+============================================================ */
+:root {
+  /* Background */
+  --bg-base:   #030b16;
+  --bg-raised: #061422;
+  --bg-sunken: #020a12;
+
+  /* Teal system */
+  --teal:       #12c5d4;
+  --teal-mid:   #0a9aaa;
+  --teal-dim:   rgba(18,197,212,0.08);
+  --teal-border:rgba(18,197,212,0.18);
+  --teal-glow:  rgba(18,197,212,0.22);
+
+  /* Semantic */
+  --amber:  #f5a623;
+  --green:  #22d48a;
+  --blue:   #4a9eff;
+  --purple: #9b8afa;
+  --red:    #f04060;
+
+  /* Text */
+  --tx-1: #e8f0fe;
+  --tx-2: #7a96b8;
+  --tx-3: #344e6a;
+  --tx-4: #1c3050;
+
+  /* Borders & surfaces */
+  --border: rgba(255,255,255,0.055);
+  --surface:rgba(255,255,255,0.028);
+  --surface-hover:rgba(255,255,255,0.05);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* Type scale — fluid */
+  --text-2xs: clamp(10px, 0.9vw, 11px);
+  --text-xs:  clamp(11px, 1.0vw, 12px);
+  --text-sm:  clamp(13px, 1.2vw, 14px);
+  --text-md:  clamp(14px, 1.3vw, 16px);
+  --text-lg:  clamp(17px, 1.7vw, 20px);
+  --text-xl:  clamp(22px, 2.5vw, 30px);
+  --text-2xl: clamp(32px, 4.5vw, 56px);
+
+  /* Spacing */
+  --page-x: clamp(20px, 5vw, 72px);
+  --section-gap: clamp(56px, 7vw, 96px);
+}
+
+/* ============================================================
+   RESET
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--tx-1);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: var(--teal-mid); color: #fff; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--tx-4); border-radius: 3px; }
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--page-x);
+  background: rgba(3,11,22,0.88);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.4px;
+  color: var(--tx-1);
+}
+.nav-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 3px rgba(18,197,212,0.15), 0 0 12px var(--teal);
+  animation: pulse-orb 2.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-orb {
+  0%,100% { box-shadow: 0 0 0 2px rgba(18,197,212,0.10), 0 0 8px rgba(18,197,212,0.4); }
+  50%      { box-shadow: 0 0 0 4px rgba(18,197,212,0.06), 0 0 16px rgba(18,197,212,0.25); }
+}
+.nav-live {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  font-weight: 500; letter-spacing: 0.6px;
+  color: var(--teal);
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-border);
+  border-radius: 20px; padding: 4px 12px;
+}
+.live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--red);
+  animation: blink 1.5s step-end infinite;
+}
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.15; } }
+.nav-links {
+  display: flex; align-items: center; gap: 24px;
+}
+.nav-links a {
+  font-size: var(--text-sm); color: var(--tx-3);
+  text-decoration: none; font-weight: 400;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--tx-2); }
+@media (max-width: 680px) { .nav-links { display: none; } }
+
+/* ============================================================
+   HERO SECTION
+============================================================ */
+.hero {
+  padding: calc(56px + clamp(48px, 7vh, 80px)) var(--page-x) clamp(36px, 5vh, 56px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% -5%, rgba(18,197,212,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 35% 28% at 30% 60%, rgba(74,158,255,0.04) 0%, transparent 55%),
+    radial-gradient(ellipse 35% 28% at 70% 60%, rgba(155,138,250,0.04) 0%, transparent 55%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--teal);
+  background: var(--teal-dim); border: 1px solid var(--teal-border);
+  border-radius: 20px; padding: 5px 14px; margin-bottom: 24px;
+}
+.hero-eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+.hero-h1 {
+  font-size: var(--text-2xl);
+  font-weight: 800; letter-spacing: -2px; line-height: 1.05;
+  color: var(--tx-1); margin-bottom: 18px;
+  max-width: 800px; margin-left: auto; margin-right: auto;
+}
+.hero-h1 em {
+  font-style: normal;
+  background: linear-gradient(95deg, #12c5d4 0%, #6de8f0 50%, #12c5d4 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: txt-shimmer 5s linear infinite;
+}
+@keyframes txt-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.hero-h1 em { animation-duration: 7s; }
+.hero-sub {
+  font-size: var(--text-md); font-weight: 300; color: var(--tx-2);
+  max-width: 540px; margin: 0 auto 36px; line-height: 1.75;
+}
+.hero-kpis {
+  display: flex; align-items: stretch; justify-content: center;
+  max-width: 600px; margin: 0 auto;
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface); overflow: hidden;
+}
+.hero-kpi {
+  flex: 1; padding: clamp(12px, 2.5vw, 20px) clamp(12px, 2vw, 18px);
+  border-right: 1px solid var(--border); text-align: center;
+}
+.hero-kpi:last-child { border-right: none; }
+.kpi-val {
+  font-family: var(--font-mono); font-size: clamp(16px, 2vw, 22px);
+  font-weight: 600; letter-spacing: -0.5px;
+  color: var(--teal); line-height: 1.2; margin-bottom: 5px;
+}
+.kpi-val span { color: var(--tx-1); }
+.kpi-label {
+  font-size: clamp(10px, 1vw, 12px); color: var(--tx-3);
+  letter-spacing: 0.3px; line-height: 1.3;
+}
+
+/* ============================================================
+   SCENARIO SELECTOR
+============================================================ */
+.scenario-chooser {
+  max-width: 1440px; margin: 0 auto;
+  padding: clamp(24px, 4vh, 40px) var(--page-x) 0;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.sc-label {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); letter-spacing: 0.5px; margin-right: 4px;
+  flex-shrink: 0;
+}
+.sc-pill {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--text-sm); font-weight: 500;
+  color: var(--tx-2);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 16px;
+  cursor: pointer; transition: all 0.22s cubic-bezier(0.16,1,0.3,1); user-select: none;
+}
+.sc-pill:hover { background: var(--surface-hover); color: var(--tx-1); transform: translateY(-1px); }
+.sc-pill.active {
+  background: var(--teal-dim); border-color: var(--teal-border);
+  color: var(--teal);
+  box-shadow: 0 0 0 1px rgba(18,197,212,0.12), 0 4px 12px rgba(18,197,212,0.08);
+}
+.sc-pill-icon { font-size: 15px; line-height: 1; }
+
+/* ============================================================
+   CANVAS HERO
+============================================================ */
+.canvas-section {
+  max-width: 1440px; margin: 0 auto;
+  padding: clamp(16px, 2.5vh, 24px) var(--page-x) 0;
+}
+.canvas-shell {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(18,197,212,0.05), 0 24px 64px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
+}
+.canvas-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.canvas-bar-left {
+  display: flex; align-items: center; gap: 10px;
+}
+.canvas-title {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); letter-spacing: 0.3px;
+}
+.canvas-bar-right {
+  display: flex; align-items: center; gap: 16px;
+}
+.cv-indicator {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--green);
+}
+.cv-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  animation: cv-glow 2.2s ease-in-out infinite;
+}
+@keyframes cv-glow {
+  0%,100% { box-shadow: 0 0 4px var(--green); }
+  50%      { box-shadow: 0 0 9px var(--green), 0 0 16px rgba(34,212,138,0.15); }
+}
+.cv-controls {
+  display: flex; gap: 6px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: clamp(11px, 1vw, 12px);
+  font-weight: 500; color: var(--tx-2);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 5px 12px;
+  cursor: pointer; transition: all 0.15s; user-select: none;
+}
+.btn:hover { background: var(--surface-hover); color: var(--tx-1); }
+.btn-primary {
+  background: var(--teal-dim); border-color: var(--teal-border); color: var(--teal);
+}
+.btn-primary:hover { background: rgba(18,197,212,0.14); }
+#mainCanvas { display: block; width: 100%; }
+.canvas-step-bar {
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.step-progress {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.step-nr {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); white-space: nowrap;
+}
+.progress-track {
+  width: clamp(60px, 8vw, 100px); height: 2px;
+  background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--teal); border-radius: 2px;
+  transition: width 0.4s ease; width: 0%;
+}
+.step-current {
+  font-size: var(--text-sm); color: var(--tx-2); font-weight: 400;
+  flex: 1; min-width: 0;
+}
+.step-current strong { color: var(--tx-1); font-weight: 500; }
+.step-latency {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--green); flex-shrink: 0;
+}
+
+/* ============================================================
+   DETAIL SECTION (Steps + Log)
+============================================================ */
+.detail-section {
+  max-width: 1440px; margin: 0 auto;
+  padding: clamp(20px, 3vh, 32px) var(--page-x) 0;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 14px;
+}
+@media (max-width: 860px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+/* Steps Panel */
+.steps-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); letter-spacing: 0.3px;
+}
+.panel-badge {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  color: var(--teal); background: var(--teal-dim);
+  border: 1px solid var(--teal-border);
+  border-radius: 20px; padding: 2px 8px;
+}
+.steps-list { padding: 8px 0; }
+.step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 8px 18px;
+  opacity: 0.3; transition: opacity 0.38s cubic-bezier(0.16,1,0.3,1), background 0.2s, transform 0.38s cubic-bezier(0.16,1,0.3,1);
+}
+.step-item:hover { background: rgba(255,255,255,0.018); }
+.step-item.active {
+  opacity: 1;
+  background: rgba(18,197,212,0.04);
+  border-left: 2px solid rgba(18,197,212,0.35);
+  padding-left: calc(18px - 2px);
+}
+.step-item.done   { opacity: 0.55; }
+.step-num {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--tx-4);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  font-weight: 600; color: var(--tx-3);
+  margin-top: 2px; transition: all 0.25s;
+}
+.step-item.active .step-num {
+  background: var(--teal); border-color: var(--teal); color: #000;
+  box-shadow: 0 0 10px rgba(18,197,212,0.4);
+}
+.step-item.done .step-num {
+  background: var(--green); border-color: var(--green); color: #000;
+}
+.step-text {
+  font-size: var(--text-sm); color: var(--tx-2); line-height: 1.5; font-weight: 400;
+}
+.step-item.active .step-text { color: var(--tx-1); }
+
+/* Log Panel */
+.log-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.log-body {
+  overflow-y: auto; flex: 1;
+  max-height: clamp(280px, 35vh, 440px);
+  scrollbar-width: thin; scrollbar-color: var(--tx-4) transparent;
+}
+.log-empty {
+  padding: 32px 20px; text-align: center;
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--tx-4);
+}
+.log-entry {
+  padding: 10px 18px; border-bottom: 1px solid rgba(255,255,255,0.028);
+  animation: log-in 0.22s ease;
+  transition: background 0.15s;
+}
+.log-entry:hover { background: rgba(255,255,255,0.02); }
+.log-entry:last-child { border-bottom: none; }
+@keyframes log-in { from { opacity:0; transform:translateX(8px); } to { opacity:1; transform:translateX(0); } }
+.log-row-1 {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.log-time {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px); color: var(--tx-4);
+  flex-shrink: 0;
+}
+.log-method {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  font-weight: 600; border-radius: 3px; padding: 1px 6px; flex-shrink: 0;
+}
+.m-POST { background: rgba(74,158,255,0.13); color: #6eaaff; }
+.m-GET  { background: rgba(34,212,138,0.1);  color: var(--green); }
+.m-WH   { background: rgba(245,166,35,0.1);  color: var(--amber); }
+.log-ep {
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--tx-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.log-status {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  color: var(--green); display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+.log-resp {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  color: rgba(18,197,212,0.65);
+  background: rgba(0,0,0,0.25); border-radius: 4px;
+  padding: 3px 8px; margin-top: 3px;
+  border-left: 2px solid var(--teal-mid);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ============================================================
+   METRICS STRIP
+============================================================ */
+.metrics-section {
+  max-width: 1440px; margin: 0 auto;
+  padding: clamp(20px, 3vh, 32px) var(--page-x) 0;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 720px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+.met-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: clamp(16px, 2.5vw, 22px);
+  position: relative; overflow: hidden;
+  transition: border-color 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s;
+}
+.met-card:hover { border-color: var(--teal-border); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+.met-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.met-card:hover::before { opacity: 1; }
+.met-label {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); letter-spacing: 0.6px; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.met-val {
+  font-family: var(--font-mono); font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600; letter-spacing: -0.5px; color: var(--tx-1);
+  margin-bottom: 5px; line-height: 1;
+}
+.met-val.tc { color: var(--teal); }
+.met-val.gc { color: var(--green); }
+.met-val.ac { color: var(--amber); }
+.met-sub { font-size: var(--text-xs); color: var(--tx-3); }
+.met-trend { font-size: var(--text-xs); color: var(--green); margin-top: 4px; }
+.upbar { display: flex; gap: 2px; margin-top: 8px; }
+.upseg { flex: 1; height: 3px; border-radius: 2px; background: var(--green); opacity: 0.75; }
+.upseg.w { background: var(--amber); }
+.upseg.e { background: var(--tx-4); opacity: 0.5; }
+
+/* ============================================================
+   POSITIONING SECTION
+============================================================ */
+.pos-section {
+  max-width: 1200px; margin: 0 auto;
+  padding: var(--section-gap) var(--page-x);
+  border-top: 1px solid var(--border);
+}
+.section-head {
+  text-align: center; margin-bottom: clamp(36px, 5vw, 56px);
+}
+.section-label {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 12px;
+}
+.section-h2 {
+  font-size: var(--text-xl); font-weight: 700;
+  letter-spacing: -1px; color: var(--tx-1); margin-bottom: 8px;
+}
+.section-p {
+  font-size: var(--text-md); color: var(--tx-2); font-weight: 300;
+}
+.pos-grid {
+  display: grid; grid-template-columns: 1fr 60px 1fr;
+  gap: 32px; align-items: center;
+}
+@media (max-width: 680px) { .pos-grid { grid-template-columns: 1fr; gap: 24px; } .pos-mid { display: none; } }
+.pos-col h3 {
+  font-size: var(--text-md); font-weight: 600; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pos-col.no h3 { color: var(--tx-3); }
+.pos-col.yes h3 { color: var(--teal); }
+.pos-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r-md); margin-bottom: 4px;
+  transition: background 0.15s;
+}
+.pos-item:hover { background: rgba(255,255,255,0.02); }
+.pos-ico { flex-shrink: 0; margin-top: 2px; font-size: 13px; }
+.pos-txt { font-size: var(--text-sm); color: var(--tx-2); line-height: 1.5; }
+.pos-col.yes .pos-txt { color: var(--tx-1); }
+.pos-mid {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.pos-vs { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--tx-4); }
+.pos-vline { width: 1px; flex: 1; min-height: 40px; background: linear-gradient(to bottom, transparent, var(--border), transparent); }
+
+/* ============================================================
+   ARCHITECTURE CAPABILITIES
+============================================================ */
+.arch-section {
+  max-width: 1200px; margin: 0 auto;
+  padding: 0 var(--page-x) var(--section-gap);
+}
+.arch-card {
+  background: var(--teal-dim); border: 1px solid var(--teal-border);
+  border-radius: var(--r-xl); padding: clamp(24px, 4vw, 40px);
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+}
+@media (max-width: 640px) { .arch-card { grid-template-columns: 1fr; gap: 24px; } }
+.arch-col-label {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 14px;
+}
+.arch-row {
+  display: flex; align-items: center; gap: 9px;
+  font-size: var(--text-sm); color: var(--tx-2); margin-bottom: 9px;
+}
+.arch-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+.footer {
+  padding: clamp(28px, 4vw, 44px) var(--page-x);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.footer-name { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 8px; }
+.footer-tag {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--tx-3); line-height: 1.7;
+}
+.footer-tag em { font-style: normal; color: var(--teal); }
+.footer-mou {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; font-size: var(--text-xs); color: var(--tx-3);
+  font-family: var(--font-mono);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 14px;
+}
+.mou-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1); }
+.reveal.in { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+
+/* ============================================================
+   CANVAS TOOLTIP
+============================================================ */
+#canvasTip {
+  position: fixed; pointer-events: none; z-index: 1000;
+  background: rgba(6,20,34,0.96); border: 1px solid var(--teal-border);
+  border-radius: var(--r-md); padding: 9px 14px;
+  font-size: var(--text-xs); color: var(--tx-1);
+  opacity: 0; transition: opacity 0.15s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  white-space: nowrap;
+}
+#canvasTip.show { opacity: 1; }
+.tip-name { font-weight: 600; color: var(--teal); margin-bottom: 2px; font-size: var(--text-sm); }
+.tip-sub  { color: var(--tx-2); font-family: var(--font-mono); }
+
+/* ============================================================
+   NEUTRALITY STATEMENT — Key positioning block
+============================================================ */
+.neutrality-wrap {
+  max-width: 1440px; margin: 0 auto;
+  padding: clamp(32px, 5vh, 52px) var(--page-x) 0;
+}
+.neutrality-card {
+  background: linear-gradient(135deg, rgba(18,197,212,0.06) 0%, rgba(10,154,170,0.02) 60%, rgba(74,158,255,0.02) 100%);
+  border: 1px solid var(--teal-border);
+  border-radius: var(--r-xl);
+  padding: clamp(28px, 4vw, 44px) clamp(28px, 5vw, 56px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: clamp(20px, 4vw, 48px);
+  align-items: center;
+  box-shadow: 0 0 0 1px rgba(18,197,212,0.06), 0 16px 48px rgba(0,0,0,0.2);
+}
+@media (max-width: 760px) {
+  .neutrality-card { grid-template-columns: 1fr; text-align: center; }
+  .neutrality-divider { display: none; }
+}
+.neutrality-col {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.neutrality-col-label {
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--tx-3); margin-bottom: 4px;
+}
+.neutrality-col-name {
+  font-size: clamp(15px, 1.8vw, 19px); font-weight: 600;
+  color: var(--tx-1); letter-spacing: -0.3px; line-height: 1.3;
+}
+.neutrality-col-sub {
+  font-size: var(--text-sm); color: var(--tx-2); line-height: 1.55;
+}
+.neutrality-divider {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; flex-shrink: 0;
+}
+.neutrality-hub {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--teal-dim); border: 1px solid var(--teal-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.neutrality-connector {
+  font-family: var(--font-mono); font-size: clamp(9px, 0.85vw, 10px);
+  color: var(--teal); letter-spacing: 0.8px;
+  text-transform: uppercase; text-align: center;
+  padding: 4px 10px; background: var(--teal-dim);
+  border: 1px solid var(--teal-border); border-radius: 20px;
+  white-space: nowrap;
+}
+.neutrality-statement-line {
+  margin-top: clamp(16px, 2.5vw, 24px);
+  padding-top: clamp(16px, 2.5vw, 24px);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.nsl-text {
+  font-size: var(--text-md); color: var(--tx-2);
+  font-weight: 300; line-height: 1.7; max-width: 780px; margin: 0 auto;
+}
+.nsl-text strong { color: var(--teal); font-weight: 500; }
+
+/* Infrastructure scale visual hint */
+.scale-strip {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); overflow: hidden;
+  margin-top: 14px;
+}
+.scale-cell {
+  flex: 1; padding: 7px 10px; text-align: center;
+  border-right: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: var(--text-xs);
+}
+.scale-cell:last-child { border-right: none; }
+.scale-cell-val { color: var(--teal); font-weight: 600; font-size: clamp(13px, 1.4vw, 16px); }
+.scale-cell-lbl { color: var(--tx-3); font-size: clamp(8px, 0.75vw, 9px); letter-spacing: 0.5px; margin-top: 2px; }
+
+/* ============================================================
+   RESPONSIVE CANVAS HEIGHT — mobile canvas shorter
+============================================================ */
+@media (max-width: 640px) {
+  .canvas-step-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+============================================================ -->
+<nav class="nav">
+  <a href="https://insurancelo.pk/" target="_blank" rel="noopener" class="nav-brand">
+    <div class="nav-pulse"></div>
+    Insurance Lo
+  </a>
+  <div class="nav-live">
+    <div class="live-dot"></div>
+    INTERACTIVE ARCHITECTURE
+  </div>
+  <div class="nav-links">
+    <a href="#">Platform API</a>
+    <a href="#">Insurer API</a>
+    <a href="https://insurancelo.pk/" target="_blank" rel="noopener" style="color:var(--teal);font-weight:500">insurancelo.pk</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+============================================================ -->
+<section class="hero">
+  <div class="hero-eyebrow reveal">
+    <div class="hero-eyebrow-dot"></div>
+    Neutral Orchestration Infrastructure · Pakistan · Emerging Markets
+  </div>
+  <h1 class="hero-h1 reveal reveal-delay-1">
+    The Infrastructure Layer<br>for <em>Embedded Protection</em>
+  </h1>
+  <p class="hero-sub reveal reveal-delay-2">
+    Orchestrating the full protection lifecycle between digital platforms and licensed insurers — compliance-first, API-native, real-time.
+  </p>
+  <div class="hero-kpis reveal reveal-delay-3">
+    <div class="hero-kpi">
+      <div class="kpi-val">Real-time</div>
+      <div class="kpi-label">Orchestration Architecture</div>
+    </div>
+    <div class="hero-kpi">
+      <div class="kpi-val" id="heroCounter">24</div>
+      <div class="kpi-label">Lifecycle Verifications</div>
+    </div>
+    <div class="hero-kpi">
+      <div class="kpi-val">100%</div>
+      <div class="kpi-label">Automated KYC Orchestration</div>
+    </div>
+    <div class="hero-kpi">
+      <div class="kpi-val">SECP</div>
+      <div class="kpi-label">Compliant Architecture</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     NEUTRALITY STATEMENT — Strategic positioning block
+============================================================ -->
+<div class="neutrality-wrap reveal">
+  <div class="neutrality-card">
+    <div class="neutrality-col">
+      <div class="neutrality-col-label">// Digital Platforms</div>
+      <div class="neutrality-col-name">Wallets · E-Commerce · Mobility · Fintech</div>
+      <div class="neutrality-col-sub">High-frequency transaction platforms needing embedded protection — but unable to integrate independently with multiple insurers.</div>
+    </div>
+    <div class="neutrality-divider">
+      <div class="neutrality-hub">⬡</div>
+      <div class="neutrality-connector">Neutral Layer</div>
+    </div>
+    <div class="neutrality-col">
+      <div class="neutrality-col-label">// Licensed Insurers</div>
+      <div class="neutrality-col-name">Underwriters · Risk Partners · Compliance Entities</div>
+      <div class="neutrality-col-sub">Licensed underwriting partners unable to efficiently deploy compliance-aware infrastructure across every digital platform independently.</div>
+    </div>
+  </div>
+  <div class="neutrality-statement-line">
+    <p class="nsl-text">
+      No single insurer can integrate with every platform. No single platform can integrate with every insurer.<br>
+      <strong>Insurance Lo orchestrates the interoperability between both.</strong>
+    </p>
+    <div class="scale-strip">
+      <div class="scale-cell"><div class="scale-cell-val">Multi-Platform</div><div class="scale-cell-lbl">INTEGRATION READY</div></div>
+      <div class="scale-cell"><div class="scale-cell-val">Multi-Insurer</div><div class="scale-cell-lbl">ORCHESTRATION</div></div>
+      <div class="scale-cell"><div class="scale-cell-val">API-Native</div><div class="scale-cell-lbl">MIDDLEWARE LAYER</div></div>
+      <div class="scale-cell"><div class="scale-cell-val">Compliance-First</div><div class="scale-cell-lbl">SECP ALIGNED</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCENARIO SELECTOR
+============================================================ -->
+<div class="scenario-chooser reveal" id="scenarioPills">
+  <span class="sc-label">Integration Scenario:</span>
+  <div class="sc-pill active" data-sc="ecommerce">
+    <span class="sc-pill-icon">🛒</span> E-Commerce
+  </div>
+  <div class="sc-pill" data-sc="wallet">
+    <span class="sc-pill-icon">💳</span> Digital Wallet
+  </div>
+  <div class="sc-pill" data-sc="ride">
+    <span class="sc-pill-icon">🛵</span> Ride-Hailing
+  </div>
+</div>
+
+<!-- ============================================================
+     CANVAS — THE HERO VISUALIZATION
+============================================================ -->
+<div class="canvas-section reveal">
+  <div class="canvas-shell">
+    <div class="canvas-topbar">
+      <div class="canvas-bar-left">
+        <div class="canvas-title">infrastructure.orchestration — <span id="cvScenarioLabel">E-Commerce Integration</span></div>
+      </div>
+      <div class="canvas-bar-right">
+        <div class="cv-indicator">
+          <div class="cv-dot"></div>
+          <span>Infrastructure operational</span>
+        </div>
+        <div class="cv-controls">
+          <button class="btn btn-primary" id="playBtn" onclick="togglePlay()">⏸ Pause</button>
+          <button class="btn" onclick="resetScene()">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="mainCanvas"></canvas>
+
+    <div class="canvas-step-bar">
+      <div class="step-progress">
+        <span class="step-nr" id="stepNr">0 / 0</span>
+        <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+      </div>
+      <div class="step-current" id="stepDesc">Initialising infrastructure flow...</div>
+      <div class="step-latency" id="stepLatency"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAIL — STEPS + LOG
+============================================================ -->
+<div class="detail-section reveal">
+  <div class="detail-grid">
+
+    <!-- Steps -->
+    <div class="steps-panel">
+      <div class="panel-header">
+        <div class="panel-title">orchestration.lifecycle_events</div>
+        <div class="panel-badge" id="stepsScBadge">E-Commerce</div>
+      </div>
+      <div class="steps-list" id="stepsEl"></div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-panel">
+      <div class="panel-header">
+        <div class="panel-title">api.orchestration_stream</div>
+        <div class="log-clr" onclick="clearLog()" style="font-family:var(--font-mono);font-size:11px;color:var(--tx-4);cursor:pointer">clear</div>
+      </div>
+      <div class="log-body" id="logEl">
+        <div class="log-empty">⬡ Awaiting API events...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     METRICS
+============================================================ -->
+<div class="metrics-section reveal">
+  <div class="metrics-grid">
+    <div class="met-card">
+      <div class="met-label">Lifecycle Verifications</div>
+      <div class="met-val tc" id="mPolicies">24</div>
+      <div class="met-trend">↑ end-to-end flows verified</div>
+    </div>
+    <div class="met-card">
+      <div class="met-label">Orchestration Status</div>
+      <div class="met-val gc" id="mLatency">142ms</div>
+      <div class="met-sub">KYC → Issuance cycle</div>
+    </div>
+    <div class="met-card">
+      <div class="met-label">API Events</div>
+      <div class="met-val" id="mRequests">0</div>
+      <div class="met-sub">this session</div>
+    </div>
+    <div class="met-card">
+      <div class="met-label">System Uptime</div>
+      <div class="met-val gc">99.97%</div>
+      <div class="upbar">
+        <div class="upseg"></div><div class="upseg"></div><div class="upseg"></div>
+        <div class="upseg"></div><div class="upseg"></div><div class="upseg w"></div>
+        <div class="upseg"></div><div class="upseg"></div><div class="upseg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     POSITIONING
+============================================================ -->
+<section class="pos-section">
+  <div class="section-head reveal">
+    <div class="section-label">// Architecture Position</div>
+    <h2 class="section-h2">Neutral Orchestration Infrastructure</h2>
+    <p class="section-p">A middleware layer — not a product, not a broker, not an ecosystem</p>
+  </div>
+  <div class="pos-grid">
+    <div class="pos-col no reveal">
+      <h3>✕  Insurance Lo is NOT</h3>
+      <div class="pos-item"><span class="pos-ico">—</span><div class="pos-txt">A consumer insurance app or D2C marketplace</div></div>
+      <div class="pos-item"><span class="pos-ico">—</span><div class="pos-txt">An insurance broker or distribution platform</div></div>
+      <div class="pos-item"><span class="pos-ico">—</span><div class="pos-txt">A closed ecosystem tied to any single platform</div></div>
+      <div class="pos-item"><span class="pos-ico">—</span><div class="pos-txt">A competitor to insurers — it orchestrates for them</div></div>
+      <div class="pos-item"><span class="pos-ico">—</span><div class="pos-txt">Dependent on owning users, channels, or distribution</div></div>
+    </div>
+    <div class="pos-mid reveal">
+      <div class="pos-vline"></div>
+      <div class="pos-vs">VS</div>
+      <div class="pos-vline"></div>
+    </div>
+    <div class="pos-col yes reveal">
+      <h3>✓  Insurance Lo IS</h3>
+      <div class="pos-item"><span class="pos-ico" style="color:var(--teal)">→</span><div class="pos-txt">A neutral API orchestration layer — platform-agnostic, insurer-agnostic</div></div>
+      <div class="pos-item"><span class="pos-ico" style="color:var(--teal)">→</span><div class="pos-txt">Compliance-aware middleware — SECP aligned, FCA structured</div></div>
+      <div class="pos-item"><span class="pos-ico" style="color:var(--teal)">→</span><div class="pos-txt">Multi-platform, multi-insurer interoperability infrastructure</div></div>
+      <div class="pos-item"><span class="pos-ico" style="color:var(--teal)">→</span><div class="pos-txt">Raast-integrated payment orchestration for distributed settlement</div></div>
+      <div class="pos-item"><span class="pos-ico" style="color:var(--teal)">→</span><div class="pos-txt">Real-time lifecycle orchestration designed for digital scale</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE CAPABILITIES -->
+<div class="arch-section">
+  <div class="arch-card reveal">
+    <div>
+      <div class="arch-col-label">// API Orchestration</div>
+      <div class="arch-row"><div class="arch-dot"></div>REST API middleware architecture</div>
+      <div class="arch-row"><div class="arch-dot"></div>Token-based authentication layer</div>
+      <div class="arch-row"><div class="arch-dot"></div>Real-time webhook orchestration</div>
+      <div class="arch-row"><div class="arch-dot"></div>Low-latency orchestration design</div>
+      <div class="arch-row"><div class="arch-dot"></div>Repeatable platform deployment model</div>
+    </div>
+    <div>
+      <div class="arch-col-label">// Compliance Orchestration</div>
+      <div class="arch-row"><div class="arch-dot"></div>FCA-structured compliance workflows</div>
+      <div class="arch-row"><div class="arch-dot"></div>SECP regulatory framework alignment</div>
+      <div class="arch-row"><div class="arch-dot"></div>Corporate agent middleware model</div>
+      <div class="arch-row"><div class="arch-dot"></div>Automated identity verification</div>
+      <div class="arch-row"><div class="arch-dot"></div>Insurer-borne underwriting risk</div>
+    </div>
+    <div>
+      <div class="arch-col-label">// Payment Orchestration</div>
+      <div class="arch-row"><div class="arch-dot"></div>Raast instant settlement rail</div>
+      <div class="arch-row"><div class="arch-dot"></div>Digital wallet event integration</div>
+      <div class="arch-row"><div class="arch-dot"></div>Distributed transaction routing</div>
+      <div class="arch-row"><div class="arch-dot"></div>Real-time settlement orchestration</div>
+      <div class="arch-row"><div class="arch-dot"></div>Programmatic payment confirmation</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer class="footer">
+  <a href="https://insurancelo.pk/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">
+    <div class="footer-name" style="cursor:pointer;transition:color 0.2s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color=''">Insurance Lo</div>
+  </a>
+  <div class="footer-tag">
+    The Neutral Orchestration Infrastructure for Embedded Protection in Digital Transactions<br>
+    Pakistan · Emerging Markets ·
+    <a href="https://insurancelo.pk/" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none;font-style:normal">insurancelo.pk</a>
+  </div>
+  <div class="footer-mou">
+    <div class="mou-dot"></div>
+    Initial platform integration pathway initiated under signed MOU
+  </div>
+  <div style="margin-top:14px;font-family:var(--font-mono);font-size:clamp(10px,0.9vw,11px);color:var(--tx-4);letter-spacing:0.4px">
+    Built for platform-scale deployment across high-frequency digital transaction ecosystems.
+  </div>
+  <div style="margin-top:8px;font-family:var(--font-mono);font-size:clamp(9px,0.8vw,10px);color:var(--tx-4);letter-spacing:0.3px;opacity:0.65">
+    Controlled infrastructure demonstration environment.
+  </div>
+</footer>
+
+<div id="canvasTip">
+  <div class="tip-name" id="tipName"></div>
+  <div class="tip-sub"  id="tipSub"></div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+'use strict';
+
+/* --------------------------------------------------------
+   COLOUR CONSTANTS
+-------------------------------------------------------- */
+const CLR = {
+  teal:   '#12c5d4',
+  teal2:  '#0a9aaa',
+  amber:  '#f5a623',
+  green:  '#22d48a',
+  blue:   '#4a9eff',
+  purple: '#9b8afa',
+  slate:  '#7a96b8',
+  white:  '#e8f0fe',
+};
+
+/* --------------------------------------------------------
+   SCENARIO DATA
+-------------------------------------------------------- */
+const SCENARIOS = {
+  ecommerce: {
+    label: 'E-Commerce Integration',
+    platformSub: 'Posch Care',
+    steps: [
+      { t:'Transaction event initiated — user checkout lifecycle begins',              nodes:['user','platform'],             edge:['user','platform'] },
+      { t:'Platform calls Insurance Lo API — POST /v1/orchestrate/quote',             nodes:['platform','hub'],              edge:['platform','hub']  },
+      { t:'Identity verification dispatched — KYC engine processes user profile',     nodes:['hub','kyc'],                   edge:['hub','kyc']       },
+      { t:'Underwriting request routed to licensed insurer API',                      nodes:['hub','insurer'],               edge:['hub','insurer']   },
+      { t:'Identity verified ✓  ·  Underwriting response received from insurer',     nodes:['kyc','hub','insurer'],          edge:null                },
+      { t:'Orchestration response returned to platform — lifecycle option surfaced',  nodes:['hub','platform'],              edge:['hub','platform']  },
+      { t:'User activates protection — POST /v1/orchestrate/bind dispatched',        nodes:['platform','hub'],              edge:['platform','hub']  },
+      { t:'Compliance workflow executed — SECP regulatory validation complete',       nodes:['hub','compliance'],            edge:['hub','compliance']},
+      { t:'Policy lifecycle binding confirmed by licensed underwriting partner',      nodes:['hub','insurer'],               edge:['hub','insurer']   },
+      { t:'Payment orchestration initiated — Raast settlement rail activated',        nodes:['hub','payment'],               edge:['hub','payment']   },
+      { t:'Settlement confirmed ✓  — payment event acknowledged',                    nodes:['payment','hub'],               edge:['payment','hub']   },
+      { t:'Policy certificate generated — notification dispatch initiated',           nodes:['hub','sms'],                   edge:['hub','sms']       },
+      { t:'Confirmation delivered to end user — lifecycle event complete',            nodes:['sms','user'],                  edge:['sms','user']      },
+      { t:'Webhook orchestrated: policy.bound event → Platform callback',            nodes:['hub','platform'],              edge:['hub','platform']  },
+    ],
+    logs:[
+      { m:'POST',ep:'/v1/orchestrate/quote',      ms:47,st:200,res:'{"lifecycle_id":"lc_9x2k","status":"quoted","binding_ready":true}'   },
+      { m:'GET', ep:'/kyc/verify/pk-938',         ms:31,st:200,res:'{"status":"verified","score":0.97,"identity":"confirmed"}'            },
+      { m:'POST',ep:'/insurer/underwrite',        ms:28,st:200,res:'{"quote_id":"q_9x2k","risk_band":"A","term":"30d"}'                  },
+      { m:'POST',ep:'/v1/orchestrate/bind',       ms:18,st:201,res:'{"policy_id":"pol_kX9m","lifecycle":"bound","event":"active"}'       },
+      { m:'POST',ep:'/compliance/validate',       ms:11,st:200,res:'{"approved":true,"framework":"SECP-CA-2024","orchestrated":true}'    },
+      { m:'POST',ep:'/payment/raast/settle',      ms:12,st:200,res:'{"txn_ref":"rtx_7Yz","settled":true,"rail":"raast"}'                 },
+      { m:'WH',  ep:'policy.bound → platform',   ms:8, st:200,res:'{"event":"policy.bound","acknowledged":true}'                        },
+      { m:'POST',ep:'/notification/dispatch',     ms:9, st:200,res:'{"delivered":true,"channel":"sms"}'                                 },
+    ]
+  },
+  wallet:{
+    label:'Digital Wallet Integration',
+    platformSub:'Wallet Platform',
+    steps:[
+      { t:'Transaction event received — fund transfer lifecycle initiated',              nodes:['user','platform'],             edge:['user','platform']   },
+      { t:'Wallet triggers Insurance Lo middleware — POST /v1/orchestrate/trigger',     nodes:['platform','hub'],              edge:['platform','hub']    },
+      { t:'Identity and transaction risk profile assessed by verification engine',      nodes:['hub','kyc'],                   edge:['hub','kyc']         },
+      { t:'Protection lifecycle request routed to underwriting partner API',            nodes:['hub','insurer'],               edge:['hub','insurer']     },
+      { t:'Compliance orchestration executed — regulatory framework applied',           nodes:['hub','compliance'],            edge:['hub','compliance']  },
+      { t:'Settlement event dispatched — Raast payment rail activated',                 nodes:['hub','payment'],               edge:['hub','payment']     },
+      { t:'Lifecycle binding complete — protection event active for transaction',       nodes:['hub','sms'],                   edge:['hub','sms']         },
+      { t:'Confirmation dispatched to user — orchestration lifecycle closed',          nodes:['sms','user'],                  edge:['sms','user']        },
+    ],
+    logs:[
+      { m:'POST',ep:'/v1/orchestrate/trigger',     ms:22,st:200,res:'{"triggered":true,"lifecycle":"initiated","event_id":"ev_mT3z"}'  },
+      { m:'GET', ep:'/kyc/profile/u_7x2',          ms:16,st:200,res:'{"verified":true,"risk_band":"A","identity":"confirmed"}'         },
+      { m:'POST',ep:'/insurer/lifecycle/bind',      ms:19,st:201,res:'{"policy_id":"pol_mT3z","bound":true,"lifecycle":"active"}'      },
+      { m:'POST',ep:'/compliance/validate',         ms:9, st:200,res:'{"approved":true,"framework":"SECP-2024"}'                      },
+      { m:'POST',ep:'/payment/raast/settle',        ms:8, st:200,res:'{"settled":true,"rail":"raast","ref":"rtx_mT3z"}'               },
+      { m:'WH',  ep:'lifecycle.bound → wallet',    ms:5, st:200,res:'{"event":"lifecycle.bound","acknowledged":true}'                 },
+      { m:'POST',ep:'/notification/dispatch',       ms:7, st:200,res:'{"delivered":true,"channel":"sms"}'                            },
+    ]
+  },
+  ride:{
+    label:'Mobility Platform Integration',
+    platformSub:'Mobility Platform',
+    steps:[
+      { t:'Trip session initiated — mobility transaction event received',              nodes:['user','platform'],             edge:['user','platform']    },
+      { t:'Platform triggers orchestration layer — ride_start lifecycle event',       nodes:['platform','hub'],              edge:['platform','hub']     },
+      { t:'Participant identity and risk profile verified via KYC engine',            nodes:['hub','kyc'],                   edge:['hub','kyc']          },
+      { t:'Protection lifecycle request dispatched to underwriting partner API',      nodes:['hub','insurer'],               edge:['hub','insurer']      },
+      { t:'Compliance orchestration executed — SECP framework applied to lifecycle',  nodes:['hub','compliance'],            edge:['hub','compliance']   },
+      { t:'Settlement event activated — Raast rail processes transaction',            nodes:['hub','payment'],               edge:['hub','payment']      },
+      { t:'Trip session ends — Platform fires ride_end lifecycle event',             nodes:['platform','hub'],              edge:['platform','hub']     },
+      { t:'Lifecycle binding closed — certificate generated via policy engine',      nodes:['hub','sms'],                   edge:['hub','sms']          },
+      { t:'Confirmation dispatched to participant — lifecycle event complete',        nodes:['sms','user'],                  edge:['sms','user']         },
+    ],
+    logs:[
+      { m:'POST',ep:'/v1/orchestrate/trigger',     ms:24,st:200,res:'{"session":"rs_9xP","lifecycle":"initiated","event":"ride_start"}'   },
+      { m:'GET', ep:'/kyc/participant/r_8Km',      ms:18,st:200,res:'{"verified":true,"risk_band":"A","identity":"confirmed"}'             },
+      { m:'POST',ep:'/insurer/lifecycle/bind',     ms:21,st:201,res:'{"policy_id":"pol_Rp7","bound":true,"session":"rs_9xP"}'             },
+      { m:'POST',ep:'/compliance/validate',        ms:10,st:200,res:'{"approved":true,"framework":"SECP-2024"}'                           },
+      { m:'POST',ep:'/payment/raast/settle',       ms:9, st:200,res:'{"settled":true,"rail":"raast"}'                                     },
+      { m:'POST',ep:'/v1/orchestrate/trigger',     ms:14,st:200,res:'{"lifecycle":"closed","certificate":"issued","event":"ride_end"}'    },
+      { m:'POST',ep:'/notification/dispatch',      ms:8, st:200,res:'{"delivered":true,"channel":"sms"}'                                 },
+    ]
+  }
+};
+
+/* --------------------------------------------------------
+   SESSION STATE
+-------------------------------------------------------- */
+let sPolicies = 0, sRequests = 0;
+
+/* --------------------------------------------------------
+   CANVAS ENGINE
+-------------------------------------------------------- */
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+let CW, CH, clock = 0, playing = true;
+let activeNodes = new Set(), activeEdge = null, packets = [];
+let ambientPackets = []; // Subtle idle flow — infrastructure always active
+
+/* Responsive canvas sizing */
+function sizeCanvas() {
+  const p = canvas.parentElement;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w   = p.clientWidth;
+  const vw  = window.innerWidth;
+  // Canvas gets more height — the hero visualization
+  let h;
+  if (vw < 480)  h = Math.min(w * 0.88, 340);
+  else if (vw < 768)  h = Math.min(w * 0.72, 480);
+  else if (vw < 1280) h = Math.min(w * 0.58, 580);
+  else                h = Math.min(w * 0.50, 660);
+
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  CW = w; CH = h;
+}
+
+/* --------------------------------------------------------
+   NODE DEFINITIONS  (normalised 0–1 coords)
+-------------------------------------------------------- */
+const NODES = {
+  hub:        { id:'hub',        label:'Insurance Lo',  sub:'Neutral Infrastructure Layer', icon:'◈', x:.500, y:.440, r:44, type:'hub',        pulse:{t:0,a:0} },
+  platform:   { id:'platform',   label:'Platform',      sub:'Posch Care',                   icon:'◇', x:.175, y:.275, r:28, type:'platform',    pulse:{t:0,a:0} },
+  user:       { id:'user',       label:'End User',      sub:'Customer',                     icon:'○', x:.065, y:.530, r:23, type:'user',        pulse:{t:0,a:0} },
+  insurer:    { id:'insurer',    label:'Insurer',       sub:'Licensed Underwriter',         icon:'◇', x:.825, y:.275, r:28, type:'insurer',     pulse:{t:0,a:0} },
+  kyc:        { id:'kyc',        label:'KYC Engine',    sub:'Verification',                 icon:'◎', x:.305, y:.098, r:22, type:'kyc',         pulse:{t:0,a:0} },
+  policy:     { id:'policy',     label:'Policy Engine', sub:'Certificate Gen.',             icon:'◎', x:.695, y:.098, r:22, type:'policy',      pulse:{t:0,a:0} },
+  compliance: { id:'compliance', label:'Compliance',    sub:'SECP Regulatory',              icon:'◎', x:.360, y:.820, r:22, type:'compliance',  pulse:{t:0,a:0} },
+  payment:    { id:'payment',    label:'Raast',         sub:'Payment Rail',                 icon:'◎', x:.640, y:.820, r:22, type:'payment',     pulse:{t:0,a:0} },
+  sms:        { id:'sms',        label:'SMS Gateway',   sub:'Notification',                 icon:'◎', x:.120, y:.820, r:20, type:'sms',         pulse:{t:0,a:0} },
+};
+
+const EDGES = [
+  ['user','platform'], ['platform','hub'], ['hub','insurer'],
+  ['hub','kyc'],  ['hub','policy'], ['hub','compliance'],
+  ['hub','payment'], ['hub','sms'], ['sms','user'],
+  ['payment','platform'],
+];
+
+/* Node visual styles */
+const NODE_STYLE = {
+  hub:        { bg0:'#001824', bg1:'#005870', stroke:'rgba(18,197,212,0.70)',  glow:CLR.teal   },
+  platform:   { bg0:'#0c1628', bg1:'#1c3060', stroke:'rgba(74,158,255,0.58)', glow:CLR.blue   },
+  user:       { bg0:'#0c1420', bg1:'#182238', stroke:'rgba(255,255,255,0.32)', glow:'#c8d8ee'  },
+  insurer:    { bg0:'#0c1828', bg1:'#183260', stroke:'rgba(64,170,255,0.55)',  glow:'#40aaff'  },
+  kyc:        { bg0:'#0c1e14', bg1:'#183a22', stroke:'rgba(34,212,138,0.55)',  glow:CLR.green  },
+  policy:     { bg0:'#140e28', bg1:'#2a1848', stroke:'rgba(155,138,250,0.55)', glow:CLR.purple },
+  compliance: { bg0:'#0c1e14', bg1:'#163820', stroke:'rgba(34,212,138,0.45)', glow:CLR.green  },
+  payment:    { bg0:'#1a1404', bg1:'#30220a', stroke:'rgba(245,166,35,0.58)',  glow:CLR.amber  },
+  sms:        { bg0:'#120e28', bg1:'#1e163e', stroke:'rgba(155,138,250,0.45)', glow:CLR.purple },
+};
+
+/* --------------------------------------------------------
+   BEZIER HELPERS
+-------------------------------------------------------- */
+function npx(n) { return { x: n.x * CW, y: n.y * CH }; }
+
+function getCurve(n1, n2) {
+  const p1 = npx(n1), p2 = npx(n2);
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const perp = { x: -dy / len, y: dx / len };
+  const bend = len * 0.15;
+  return {
+    x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+    cpx: (p1.x + p2.x) / 2 + perp.x * bend,
+    cpy: (p1.y + p2.y) / 2 + perp.y * bend,
+  };
+}
+
+function curveAt(c, t) {
+  const u = 1 - t;
+  return {
+    x: u*u*c.x1 + 2*u*t*c.cpx + t*t*c.x2,
+    y: u*u*c.y1 + 2*u*t*c.cpy + t*t*c.y2,
+  };
+}
+
+/* --------------------------------------------------------
+   DRAW BACKGROUND
+-------------------------------------------------------- */
+function drawBG() {
+  ctx.fillStyle = '#030b16';
+  ctx.fillRect(0, 0, CW, CH);
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.016)';
+  ctx.lineWidth = 1;
+  const gs = 44;
+  for (let x = 0; x < CW; x += gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+  for (let y = 0; y < CH; y += gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+  // Hub ambient glow — breathing, cinematically alive
+  const hx = NODES.hub.x*CW, hy = NODES.hub.y*CH;
+  const breathe = 0.055 + Math.sin(clock * 0.75) * 0.018;
+  const gg = ctx.createRadialGradient(hx, hy, 0, hx, hy, CH*0.55);
+  gg.addColorStop(0, `rgba(18,197,212,${breathe.toFixed(3)})`);
+  gg.addColorStop(0.5, `rgba(18,197,212,${(breathe*0.3).toFixed(3)})`);
+  gg.addColorStop(1, 'transparent');
+  ctx.fillStyle = gg;
+  ctx.fillRect(0, 0, CW, CH);
+}
+
+/* --------------------------------------------------------
+   DRAW EDGES
+-------------------------------------------------------- */
+function drawEdges() {
+  EDGES.forEach(([a, b]) => {
+    const n1 = NODES[a], n2 = NODES[b];
+    if (!n1 || !n2) return;
+    const c = getCurve(n1, n2);
+    const isActive = activeEdge &&
+      ((activeEdge[0]===a && activeEdge[1]===b) ||
+       (activeEdge[0]===b && activeEdge[1]===a));
+    ctx.beginPath();
+    ctx.moveTo(c.x1, c.y1);
+    ctx.quadraticCurveTo(c.cpx, c.cpy, c.x2, c.y2);
+    if (isActive) {
+      ctx.strokeStyle = 'rgba(18,197,212,0.45)';
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = CLR.teal;
+      ctx.shadowBlur = 8;
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  });
+}
+
+/* --------------------------------------------------------
+   DRAW NODES
+-------------------------------------------------------- */
+function drawNodes() {
+  // Scale factor so nodes look right on any canvas size
+  const scale = Math.min(CW / 900, CH / 560, 1.35);
+
+  Object.values(NODES).forEach(n => {
+    const { x: px, y: py } = npx(n);
+    const r  = n.r * scale;
+    const st = NODE_STYLE[n.type] || NODE_STYLE.user;
+    const isHub = n.type === 'hub';
+    const isActive = activeNodes.has(n.id);
+
+    /* Ambient glow — layered, premium soft luminosity */
+    if (isActive || isHub) {
+      const gr1 = r * (isHub ? 2.9 : 2.3);
+      const gg1 = ctx.createRadialGradient(px, py, r*0.2, px, py, gr1);
+      gg1.addColorStop(0, hexA(st.glow, isHub ? 0.14 : 0.09));
+      gg1.addColorStop(0.6, hexA(st.glow, isHub ? 0.05 : 0.03));
+      gg1.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(px, py, gr1, 0, Math.PI*2);
+      ctx.fillStyle = gg1; ctx.fill();
+    }
+    /* Persistent hub core glow — always present, breathing */
+    if (isHub) {
+      const gr2 = r * 1.6;
+      const gg2 = ctx.createRadialGradient(px, py, 0, px, py, gr2);
+      gg2.addColorStop(0, hexA(st.glow, 0.10));
+      gg2.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(px, py, gr2, 0, Math.PI*2);
+      ctx.fillStyle = gg2; ctx.fill();
+    }
+
+    /* Hub rotating rings — measured, active */
+    if (isHub) {
+      ctx.save(); ctx.translate(px, py);
+      ctx.rotate(clock * 0.18);
+      ctx.beginPath(); ctx.arc(0,0, r+14*scale, 0, Math.PI*2);
+      ctx.setLineDash([6,9]); ctx.strokeStyle='rgba(18,197,212,0.24)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.rotate(-clock * 0.23);
+      ctx.beginPath(); ctx.arc(0,0, r+27*scale, 0, Math.PI*2);
+      ctx.setLineDash([2,14]); ctx.strokeStyle='rgba(18,197,212,0.11)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    /* Pulse ring — smooth, confident propagation */
+    const p = n.pulse;
+    if (p.a > 0) {
+      ctx.beginPath(); ctx.arc(px, py, r + p.t * 19 * scale, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(st.glow, p.a * 0.85);
+      ctx.lineWidth = 1.2; ctx.stroke();
+      p.t += 0.036; p.a = Math.max(0, p.a - 0.032);
+    }
+
+    /* Node body — 3-stop gradient for premium depth */
+    const bg = ctx.createRadialGradient(px - r*0.3, py - r*0.35, 1, px, py, r);
+    bg.addColorStop(0,   lighten(st.bg1, 0.18));
+    bg.addColorStop(0.4, lighten(st.bg1, 0.05));
+    bg.addColorStop(1,   st.bg0);
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2);
+    ctx.fillStyle = bg; ctx.fill();
+
+    /* Specular highlight — top-left rim, subtle dimensionality */
+    const spec = ctx.createRadialGradient(px - r*0.35, py - r*0.38, 0, px - r*0.2, py - r*0.25, r*0.55);
+    spec.addColorStop(0, isHub ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.06)');
+    spec.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2);
+    ctx.fillStyle = spec; ctx.fill();
+
+    /* Border */
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2);
+    const baseStroke = st.stroke.replace(/[\d.]+\)$/, m => isActive ? m : (parseFloat(m)*0.30).toFixed(2)+')');
+    ctx.strokeStyle = isActive ? st.stroke : baseStroke;
+    ctx.lineWidth   = isActive ? 1.6 : 0.8;
+    if (isActive) { ctx.shadowColor = st.glow; ctx.shadowBlur = 9; }
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    /* Icon */
+    ctx.fillStyle = isActive ? '#ffffff' : 'rgba(255,255,255,0.45)';
+    ctx.font      = `${Math.round((isHub ? 16 : 13) * scale)}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n.icon, px, py - 2);
+
+    /* Label */
+    const ly = py + r + 7 * scale;
+    const lsz = Math.round((isHub ? 12 : 11) * scale);
+    ctx.fillStyle    = isActive ? '#e8f0fe' : 'rgba(232,240,254,0.5)';
+    ctx.font         = `600 ${lsz}px Inter, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.fillText(n.label, px, ly);
+
+    const ssz = Math.round(9.5 * scale);
+    ctx.fillStyle = 'rgba(122,150,184,0.45)';
+    ctx.font      = `${ssz}px JetBrains Mono, monospace`;
+    ctx.fillText(n.sub, px, ly + lsz + 2);
+  });
+}
+
+/* --------------------------------------------------------
+   DRAW PACKETS
+-------------------------------------------------------- */
+function drawPackets() {
+  packets = packets.filter(pk => {
+    if (pk.done) return false;
+    const n1 = NODES[pk.from], n2 = NODES[pk.to];
+    if (!n1 || !n2) return false;
+    const c   = getCurve(n1, n2);
+    const pos = curveAt(c, pk.t);
+
+    // Trail — clean, directional
+    for (let i = 1; i < 5; i++) {
+      const pt = curveAt(c, Math.max(0, pk.t - i * 0.022));
+      const a  = (1 - i/5) * 0.20;
+      const rr = (3.2 - i * 0.5);
+      if (rr > 0) {
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, rr, 0, Math.PI*2);
+        ctx.fillStyle = hexA(pk.color, a); ctx.fill();
+      }
+    }
+    // Glow halo — precise, contained
+    const gg = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 10);
+    gg.addColorStop(0, hexA(pk.color, 0.38));
+    gg.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 10, 0, Math.PI*2);
+    ctx.fillStyle = gg; ctx.fill();
+    // Core
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = pk.color; ctx.fill();
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI*2);
+    ctx.fillStyle = '#ffffff'; ctx.fill();
+
+    // Eased advancement — accelerate at start, decelerate near target
+    const ease = pk.t < 0.5
+      ? pk.spd * (0.7 + pk.t * 0.6)
+      : pk.spd * (1.0 - (pk.t - 0.5) * 0.3);
+    pk.t += ease;
+    if (pk.t >= 1) {
+      pk.done = true;
+      pulse(pk.to);
+      return false;
+    }
+    return true;
+  });
+}
+
+/* Draw idle ambient ghost particles — infrastructure always active */
+function drawAmbient() {
+  ambientPackets = ambientPackets.filter(ap => {
+    const n1 = NODES[ap.from], n2 = NODES[ap.to];
+    if (!n1 || !n2) return false;
+    const c   = getCurve(n1, n2);
+    const pos = curveAt(c, ap.t);
+    // Ghost dot — very subtle, no glow
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 1.8, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(18,197,212,${(ap.alpha).toFixed(2)})`;
+    ctx.fill();
+    ap.t += ap.spd;
+    return ap.t < 1;
+  });
+}
+
+/* Seed ambient packets on all edges continuously */
+let ambientTick = 0;
+function seedAmbient() {
+  ambientTick++;
+  if (ambientTick % 28 !== 0) return; // throttle spawn rate
+  if (ambientPackets.length > 16) return; // cap pool size
+  const edge = EDGES[Math.floor(Math.random() * EDGES.length)];
+  const forward = Math.random() > 0.5;
+  ambientPackets.push({
+    from:  forward ? edge[0] : edge[1],
+    to:    forward ? edge[1] : edge[0],
+    t:     0,
+    spd:   0.004 + Math.random() * 0.003,
+    alpha: 0.08 + Math.random() * 0.08,
+  });
+}
+
+/* --------------------------------------------------------
+   RENDER LOOP
+-------------------------------------------------------- */
+let lastRaf = 0;
+function render(ts) {
+  requestAnimationFrame(render);
+  if (!playing) return;
+  // Throttle to ~60fps but allow lower on mobile
+  if (ts - lastRaf < 12) return;
+  lastRaf = ts;
+  clock += 0.016;
+  drawBG();
+  drawEdges();
+  seedAmbient();   // spawn idle ghost particles
+  drawAmbient();   // draw idle ghost particles (before main packets)
+  drawPackets();   // draw active orchestration packets on top
+  drawNodes();
+}
+
+/* --------------------------------------------------------
+   HELPERS
+-------------------------------------------------------- */
+function hexA(hex, a) {
+  if (!hex || hex[0] !== '#') {
+    try { return hex.replace(/[\d.]+\)$/, a + ')'); } catch(e) { return hex; }
+  }
+  const ri = parseInt(hex.slice(1,3),16);
+  const gi = parseInt(hex.slice(3,5),16);
+  const bi = parseInt(hex.slice(5,7),16);
+  return `rgba(${ri},${gi},${bi},${a})`;
+}
+function lighten(hex, amt) {
+  if (!hex || hex[0] !== '#') return hex;
+  const f = (s) => Math.min(255, parseInt(s,16) + Math.round(amt*255));
+  return `rgb(${f(hex.slice(1,3))},${f(hex.slice(3,5))},${f(hex.slice(5,7))})`;
+}
+function pulse(id) {
+  const n = NODES[id]; if (n) { n.pulse.t = 0; n.pulse.a = 1; }
+}
+function fire(from, to, color, spd) {
+  packets.push({ from, to, color: color||CLR.teal, t:0, spd:spd||0.016, done:false });
+}
+function edgeColor(a, b) {
+  if (a==='payment'||b==='payment') return CLR.amber;
+  if (a==='sms'    ||b==='sms')     return CLR.purple;
+  if (a==='insurer'||b==='insurer') return CLR.blue;
+  if (a==='kyc'    ||b==='kyc')     return CLR.green;
+  if (a==='compliance'||b==='compliance') return '#22d4aa';
+  if (a==='user'   ||b==='user')    return CLR.slate;
+  return CLR.teal;
+}
+
+/* --------------------------------------------------------
+   SCENARIO ENGINE
+-------------------------------------------------------- */
+let curSc   = 'ecommerce';
+let curStep = -1;
+let logIdx  = 0;
+let stepTmr = null;
+
+function sc() { return SCENARIOS[curSc]; }
+
+function buildStepList() {
+  const steps = sc().steps;
+  document.getElementById('stepsEl').innerHTML = steps.map((s, i) => `
+    <div class="step-item ${i < curStep ? 'done' : i === curStep ? 'active' : ''}" id="si${i}">
+      <div class="step-num">${i < curStep ? '✓' : i+1}</div>
+      <div class="step-text">${s.t}</div>
+    </div>
+  `).join('');
+  // Scroll active step into view
+  const el = document.getElementById('si' + curStep);
+  if (el) el.scrollIntoView({ block:'nearest', behavior:'smooth' });
+}
+
+function syncUI() {
+  const total = sc().steps.length;
+  const nr    = Math.max(0, curStep + 1);
+  const pct   = total > 0 ? (nr / total * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('stepNr').textContent   = `${nr} / ${total}`;
+
+  const step = sc().steps[curStep];
+  if (step) {
+    document.getElementById('stepDesc').innerHTML = `<strong>${nr}.</strong> ${step.t}`;
+    const lats = [98,114,136,143,152,128,107,119,131,145,108,122];
+    document.getElementById('stepLatency').textContent = lats[curStep % lats.length] + 'ms';
+  }
+}
+
+function advance() {
+  if (!playing) return;
+  const steps = sc().steps;
+  curStep++;
+  if (curStep >= steps.length) {
+    curStep = -1; logIdx = 0;
+    activeNodes = new Set(); activeEdge = null;
+    document.getElementById('stepDesc').textContent = 'Flow complete — restarting...';
+    document.getElementById('stepLatency').textContent = '';
+    stepTmr = setTimeout(advance, 2000);
+    return;
+  }
+  const step = steps[curStep];
+  activeNodes = new Set(step.nodes || []);
+  activeEdge  = step.edge || null;
+
+  if (step.edge) {
+    const [a, b] = step.edge;
+    fire(a, b, edgeColor(a, b), 0.016);
+  }
+  (step.nodes || []).forEach(id => setTimeout(() => pulse(id), 250));
+
+  if (logIdx < sc().logs.length) {
+    setTimeout(() => pushLog(sc().logs[logIdx++]), 650);
+  }
+
+  buildStepList();
+  syncUI();
+  tickMetrics();
+
+  stepTmr = setTimeout(advance, 2500 + Math.random() * 300);
+}
+
+function resetScene() {
+  if (stepTmr) clearTimeout(stepTmr);
+  curStep = -1; logIdx = 0;
+  activeNodes = new Set(); activeEdge = null; packets = [];
+  buildStepList(); syncUI();
+  stepTmr = setTimeout(advance, 500);
+}
+
+function switchSc(id) {
+  if (id === curSc) return;
+  curSc = id;
+  NODES.platform.sub = SCENARIOS[id].platformSub;
+  document.getElementById('cvScenarioLabel').textContent = SCENARIOS[id].label;
+  const badgeMap = { ecommerce:'E-Commerce', wallet:'Wallet', ride:'Mobility' };
+  document.getElementById('stepsScBadge').textContent = badgeMap[id] || id;
+  document.querySelectorAll('.sc-pill').forEach(p => p.classList.toggle('active', p.dataset.sc === id));
+  resetScene();
+}
+
+/* --------------------------------------------------------
+   LOG
+-------------------------------------------------------- */
+function pushLog(log) {
+  const el = document.getElementById('logEl');
+  const empty = el.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const now = new Date();
+  const ts  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `
+    <div class="log-row-1">
+      <span class="log-time">${ts}</span>
+      <span class="log-method m-${log.m}">${log.m}</span>
+      <span class="log-ep">${log.ep}</span>
+      <span class="log-status">✓ ${log.st === 201 ? '201' : '200'} · ${log.ms}ms</span>
+    </div>
+    ${log.res ? `<div class="log-resp">← ${log.res}</div>` : ''}
+  `;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  sRequests++;
+  document.getElementById('mRequests').textContent = sRequests;
+}
+
+function clearLog() {
+  document.getElementById('logEl').innerHTML = '<div class="log-empty">⬡ Cleared. Awaiting events...</div>';
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+/* --------------------------------------------------------
+   METRICS
+-------------------------------------------------------- */
+function tickMetrics() {
+  if (Math.random() < 0.45) {
+    sPolicies++;
+    const tot = 24 + sPolicies;
+    document.getElementById('mPolicies').textContent  = tot;
+    document.getElementById('heroCounter').textContent = tot;
+  }
+  document.getElementById('mLatency').textContent = (118 + Math.round(Math.random()*52)) + 'ms';
+}
+
+/* --------------------------------------------------------
+   CONTROLS
+-------------------------------------------------------- */
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play';
+  if (playing) advance();
+}
+
+/* --------------------------------------------------------
+   TOOLTIP
+-------------------------------------------------------- */
+const tip = document.getElementById('canvasTip');
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const scale = Math.min(CW / 900, CH / 560, 1.35);
+  let found = null;
+  Object.values(NODES).forEach(n => {
+    const dx = mx - n.x * CW, dy = my - n.y * CH;
+    if (Math.hypot(dx, dy) < n.r * scale + 10) found = n;
+  });
+  if (found) {
+    document.getElementById('tipName').textContent = found.label;
+    document.getElementById('tipSub').textContent  = found.sub;
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top  = (e.clientY - 28) + 'px';
+    tip.classList.add('show');
+    canvas.style.cursor = 'pointer';
+  } else {
+    tip.classList.remove('show');
+    canvas.style.cursor = 'crosshair';
+  }
+});
+canvas.addEventListener('mouseleave', () => { tip.classList.remove('show'); });
+
+/* --------------------------------------------------------
+   SCENARIO TABS
+-------------------------------------------------------- */
+document.querySelectorAll('.sc-pill').forEach(el => {
+  el.addEventListener('click', () => switchSc(el.dataset.sc));
+});
+
+/* --------------------------------------------------------
+   KEYBOARD
+-------------------------------------------------------- */
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'Digit1') switchSc('ecommerce');
+  if (e.code === 'Digit2') switchSc('wallet');
+  if (e.code === 'Digit3') switchSc('ride');
+  if (e.code === 'KeyR')   resetScene();
+});
+
+/* --------------------------------------------------------
+   SCROLL REVEAL
+-------------------------------------------------------- */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+/* --------------------------------------------------------
+   RESIZE
+-------------------------------------------------------- */
+let resizeTmr;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTmr);
+  resizeTmr = setTimeout(() => { sizeCanvas(); }, 120);
+});
+
+/* --------------------------------------------------------
+   INIT
+-------------------------------------------------------- */
+function init() {
+  sizeCanvas();
+  buildStepList();
+  requestAnimationFrame(render);
+  setTimeout(advance, 900);
+}
+init();
+</script>
+</body>
+</html>
